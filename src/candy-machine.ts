@@ -1,11 +1,11 @@
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@j0nnyboi/anchor';
 
-import { MintLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { MintLayout, TOKEN_PROGRAM_ID, Token } from '@safecoin/safe-token';
 import {
+  PublicKey,
     SystemProgram,
     Transaction,
-    SYSVAR_SLOT_HASHES_PUBKEY,
-} from '@solana/web3.js';
+} from '@safecoin/web3.js';
 import { sendTransactions, SequenceType } from './connection';
 
 import {
@@ -18,6 +18,10 @@ import {
 
 export const CANDY_MACHINE_PROGRAM = new anchor.web3.PublicKey(
     'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+);
+
+export const SYSVAR_SLOT_HASHES_PUBKEY = new PublicKey(
+  'SysvarS1otHashes111111111111111111111111111',
 );
 
 const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(

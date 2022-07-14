@@ -10,9 +10,9 @@ import {
   TransactionSignature,
   Blockhash,
   FeeCalculator,
-} from '@solana/web3.js';
+} from '@safecoin/web3.js';
 
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletNotConnectedError } from '@araviel/wallet-adapter-base';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;

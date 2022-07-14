@@ -1,18 +1,18 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import styled from "styled-components";
 import confetti from "canvas-confetti";
-import * as anchor from "@project-serum/anchor";
+import * as anchor from "@j0nnyboi/anchor";
 import {
     Commitment,
     Connection,
     PublicKey,
     Transaction,
-    LAMPORTS_PER_SOL
-} from "@solana/web3.js";
-import {WalletAdapterNetwork} from '@solana/wallet-adapter-base';
-import {useWallet} from "@solana/wallet-adapter-react";
-import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
-import {GatewayProvider} from '@civic/solana-gateway-react';
+    LAMPORTS_PER_SAFE
+} from "@safecoin/web3.js";
+import {WalletAdapterNetwork} from '@araviel/wallet-adapter-base';
+import {useWallet} from "@araviel/wallet-adapter-react";
+import {WalletMultiButton} from "@araviel/wallet-adapter-react-ui";
+//import {GatewayProvider} from '@civic/solana-gateway-react';
 import Countdown from "react-countdown";
 import {Snackbar, Paper, LinearProgress, Chip} from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
@@ -29,7 +29,7 @@ import {
     SetupState,
 } from "./candy-machine";
 
-const cluster = process.env.REACT_APP_SOLANA_NETWORK!.toString();
+const cluster = process.env.REACT_APP_SAFECOIN_NETWORK!.toString();
 const decimals = process.env.REACT_APP_SPL_TOKEN_TO_MINT_DECIMALS ? +process.env.REACT_APP_SPL_TOKEN_TO_MINT_DECIMALS!.toString() : 9;
 const splTokenName = process.env.REACT_APP_SPL_TOKEN_TO_MINT_NAME ? process.env.REACT_APP_SPL_TOKEN_TO_MINT_NAME.toString() : "TOKEN";
 
@@ -219,7 +219,7 @@ const Home = (props: HomeProps) => {
     const [isSoldOut, setIsSoldOut] = useState(false);
     const [payWithSplToken, setPayWithSplToken] = useState(false);
     const [price, setPrice] = useState(0);
-    const [priceLabel, setPriceLabel] = useState<string>("SOL");
+    const [priceLabel, setPriceLabel] = useState<string>("SAFE");
     const [whitelistPrice, setWhitelistPrice] = useState(0);
     const [whitelistEnabled, setWhitelistEnabled] = useState(false);
     const [isBurnToken, setIsBurnToken] = useState(false);
@@ -296,8 +296,8 @@ const Home = (props: HomeProps) => {
                         setPrice(cndy.state.price.toNumber() / divider);
                         setWhitelistPrice(cndy.state.price.toNumber() / divider);
                     } else {
-                        setPrice(cndy.state.price.toNumber() / LAMPORTS_PER_SOL);
-                        setWhitelistPrice(cndy.state.price.toNumber() / LAMPORTS_PER_SOL);
+                        setPrice(cndy.state.price.toNumber() / LAMPORTS_PER_SAFE);
+                        setWhitelistPrice(cndy.state.price.toNumber() / LAMPORTS_PER_SAFE);
                     }
 
 
@@ -312,7 +312,7 @@ const Home = (props: HomeProps) => {
                             if (cndy.state.tokenMint) {
                                 setWhitelistPrice(cndy.state.whitelistMintSettings.discountPrice?.toNumber() / divider);
                             } else {
-                                setWhitelistPrice(cndy.state.whitelistMintSettings.discountPrice?.toNumber() / LAMPORTS_PER_SOL);
+                                setWhitelistPrice(cndy.state.whitelistMintSettings.discountPrice?.toNumber() / LAMPORTS_PER_SAFE);
                             }
                         }
 
@@ -406,7 +406,7 @@ const Home = (props: HomeProps) => {
                         ) {
                             setAlertState({
                                 open: true,
-                                message: `Couldn't fetch candy machine state with rpc: ${props.rpcHost}! This probably means you have an issue with the REACT_APP_SOLANA_RPC_HOST value in your .env file, or you are not using a custom RPC!`,
+                                message: `Couldn't fetch candy machine state with rpc: ${props.rpcHost}! This probably means you have an issue with the REACT_APP_SAFECOIN_RPC_HOST value in your .env file, or you are not using a custom RPC!`,
                                 severity: 'error',
                                 hideDuration: null,
                             });
@@ -619,7 +619,7 @@ const Home = (props: HomeProps) => {
         (async () => {
             if (anchorWallet) {
                 const balance = await props.connection.getBalance(anchorWallet!.publicKey);
-                setBalance(balance / LAMPORTS_PER_SOL);
+                setBalance(balance / LAMPORTS_PER_SAFE);
             }
         })();
     }, [anchorWallet, props.connection]);
@@ -642,7 +642,7 @@ const Home = (props: HomeProps) => {
                 <WalletContainer>
                     <Wallet>
                         {wallet ?
-                            <WalletAmount>{(balance || 0).toLocaleString()} SOL<ConnectButton/></WalletAmount> :
+                            <WalletAmount>{(balance || 0).toLocaleString()} SAFE<ConnectButton/></WalletAmount> :
                             <ConnectButton>Connect Wallet</ConnectButton>}
                     </Wallet>
                 </WalletContainer>
@@ -663,6 +663,7 @@ const Home = (props: HomeProps) => {
                             {wallet && isActive && whitelistEnabled && (whitelistTokenBalance > 0) && !isBurnToken &&
                               <h3>You are whitelisted and allowed to mint.</h3>}
                             {wallet && isActive && endDate && Date.now() < endDate.getTime() &&
+                              
                               <Countdown
                                 date={toDate(candyMachine?.state?.endSettings?.number)}
                                 onMount={({completed}) => completed && setIsEnded(true)}
@@ -692,33 +693,7 @@ const Home = (props: HomeProps) => {
                                         candyMachine?.state.gatekeeper &&
                                         wallet.publicKey &&
                                         wallet.signTransaction ? (
-                                            <GatewayProvider
-                                                wallet={{
-                                                    publicKey:
-                                                        wallet.publicKey ||
-                                                        new PublicKey(CANDY_MACHINE_PROGRAM),
-                                                    //@ts-ignore
-                                                    signTransaction: wallet.signTransaction,
-                                                }}
-                                                // // Replace with following when added
-                                                // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
-                                                gatekeeperNetwork={
-                                                    candyMachine?.state?.gatekeeper?.gatekeeperNetwork
-                                                } // This is the ignite (captcha) network
-                                                /// Don't need this for mainnet
-                                                clusterUrl={rpcUrl}
-                                                cluster={cluster}
-                                                options={{autoShowModal: false}}
-                                            >
-                                                <MintButton
-                                                    candyMachine={candyMachine}
-                                                    isMinting={isMinting}
-                                                    isActive={isActive}
-                                                    isEnded={isEnded}
-                                                    isSoldOut={isSoldOut}
-                                                    onMint={onMint}
-                                                />
-                                            </GatewayProvider>
+                                        <>{/* check previous commit to restore gateway */}</>
                                         ) : (
                                             <MintButton
                                                 candyMachine={candyMachine}
